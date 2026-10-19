@@ -1,0 +1,5 @@
+# jen pro lokální vývoj, Coolify tenhle soubor nenačítá
+services:
+  web:
+    ports:
+      - "8443:3000"
