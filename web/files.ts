@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS files (
 
 export async function uploadFile(req: Request): Promise<Response> {
     try {
+        if (req.method !== "POST") {
+            return new Response("Method Not Allowed", { status: 405 });
+        }
+
         const form = await req.formData();
         const upload = form.get("file");
 
@@ -40,10 +44,10 @@ export async function uploadFile(req: Request): Promise<Response> {
 
         const password = crypto.randomUUID();
         const createdAt = Date.now();
-
+        const hash = await Bun.password.hash(password)
         db.run(
             "INSERT INTO files (id, password, name, size, created_at, path) VALUES (?, ?, ?, ?, ?, ?)",
-            [id, password, name, size, createdAt, path]
+            [id, hash, name, size, createdAt, path]
         );
 
         return Response.json({ id, password, name, size, createdAt });
@@ -53,7 +57,7 @@ export async function uploadFile(req: Request): Promise<Response> {
     }
 }
 
-export async function downloadFile(req: BunRequest<"/:id/:name">): Promise<Response> {
+export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Response> {
     try {
         const method = req.method;
         if (method == "GET") {
@@ -86,7 +90,9 @@ export async function downloadFile(req: BunRequest<"/:id/:name">): Promise<Respo
                 return new Response("Missing password", { status: 400 });
             }
 
-            if (password !== fileRecord.password) {
+            const hash = await Bun.password.hash(password)
+
+            if (hash !== fileRecord.password) {
                 return new Response("Invalid password", { status: 403 });
             }
 
