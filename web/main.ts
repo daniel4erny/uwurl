@@ -1,9 +1,12 @@
 import index from "./public/index.html";
+import { uploadFile, downloadFile } from "./files.ts";
 
 Bun.serve({
   port: 3000,
   routes: {
-    "/": index,
+      "/": index,
+      "/api/upload_file": uploadFile,
+      "/download/:id": downloadFile
   },
   fetch() {
     return new Response("Not Found", { status: 404 });
