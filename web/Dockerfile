@@ -1,5 +1,5 @@
 FROM oven/bun
-
+WORKDIR /app
 ENV NODE_ENV=production
 
 COPY bun.lock .
@@ -9,4 +9,4 @@ RUN bun install --frozen-lockfile
 
 COPY ./ ./
 
-CMD ["bun", "main.js"]
+CMD ["bun", "main.ts"]

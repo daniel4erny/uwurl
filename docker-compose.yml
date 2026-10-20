@@ -3,3 +3,7 @@ services:
     build: ./web
     expose:
       - "3000"
+    volumes:
+      - uploads:/app/uploads
+volumes:
+  uploads:
