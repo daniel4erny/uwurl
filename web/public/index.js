@@ -1,26 +1,13 @@
+// script je type="module" → funkce nejsou globální, onclick="upload()" v HTML je nevidí
+document.getElementById("uploadButton").addEventListener("click", upload);
+
 async function upload() {
-    /*     const form = await req.formData();
-        const upload = form.get("file");
-
-        if (!(upload instanceof File)) {
-            return new Response("Missing file", { status: 400 });
-        }
-
-        const id = crypto.randomUUID();
-        const name = upload.name
-        const size = upload.size;
-        const path = `./app/uploads${id}`;
-        await Bun.write(path, upload);
-
-        const password = crypto.randomUUID();
-        const createdAt = Date.now();
-        const hash = await Bun.password.hash(password) */
-
     const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
     const file = fileInput.files[0];
     if (!file) { return };
 
-    const res = await fetch("/upload", {
+    const res = await fetch("/api/upload_file", {
         method: "POST",
         headers: {
             "Content-Type": "application/octet-stream",
@@ -29,6 +16,11 @@ async function upload() {
         body: file,
     });
 
+    if (!res.ok) {
+        status.innerText = `Chyba: ${await res.text()}`;
+        return;
+    }
+
     const body = await res.json();
-    document.getElementById("status").innerText(String(body))
+    status.innerText = `id: ${body.id}, heslo: ${body.password}`;
 }

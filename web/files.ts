@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { file } from "bun";
 import type { BunRequest } from "bun";
+import { mkdirSync } from "node:fs";
 
 type FileRecord = {
     id: string;
@@ -11,6 +12,8 @@ type FileRecord = {
     path: string;
 };
 
+mkdirSync("./data", { recursive: true }); // SQLite neumí vytvořit složku, jen soubor
+mkdirSync("./uploads", { recursive: true });
 const db = new Database("./data/uwurl.sqlite", { create: true });
 db.run(`
 CREATE TABLE IF NOT EXISTS files (
@@ -41,10 +44,17 @@ export async function uploadFile(req: Request): Promise<Response> {
         const id = crypto.randomUUID();
         const name = decodeURIComponent(req.headers.get("x-filename") ?? "unnamed");
         const size = upload.size;
-        const path = `./app/uploads/${id}`;
+        const path = `./uploads/${id}`;
         await Bun.write(path, upload);
 
-        const password = crypto.randomUUID();
+        function generateRandomHex(length = 10) {
+          const buffer = new Uint8Array(length);
+          crypto.getRandomValues(buffer);
+          return Array.from(buffer)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        }
+        const password = generateRandomHex(16);
         const createdAt = Date.now();
         const hash = await Bun.password.hash(password);
         db.run(
