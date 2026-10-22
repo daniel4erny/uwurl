@@ -1,0 +1,9 @@
+{
+  // frontend běží v prohlížeči – potřebuje DOM typy (document, window, fetch...)
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "target": "ESNext",
+    "checkJs": false
+  },
+  "include": ["**/*.js"]
+}

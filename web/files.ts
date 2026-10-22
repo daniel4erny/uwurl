@@ -29,22 +29,24 @@ export async function uploadFile(req: Request): Promise<Response> {
             return new Response("Method Not Allowed", { status: 405 });
         }
 
-        const form = await req.formData();
-        const upload = form.get("file");
+        if (req.headers.get("content-type") !== "application/octet-stream") {
+            return new Response("Expected application/octet-stream", { status: 415 });
+        }
 
-        if (!(upload instanceof File)) {
+        const upload = await req.blob();
+        if (upload.size === 0) {
             return new Response("Missing file", { status: 400 });
         }
 
         const id = crypto.randomUUID();
-        const name = upload.name
+        const name = decodeURIComponent(req.headers.get("x-filename") ?? "unnamed");
         const size = upload.size;
-        const path = `./data/files/${id}`;
+        const path = `./app/uploads/${id}`;
         await Bun.write(path, upload);
 
         const password = crypto.randomUUID();
         const createdAt = Date.now();
-        const hash = await Bun.password.hash(password)
+        const hash = await Bun.password.hash(password);
         db.run(
             "INSERT INTO files (id, password, name, size, created_at, path) VALUES (?, ?, ?, ?, ?, ?)",
             [id, hash, name, size, createdAt, path]
