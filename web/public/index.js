@@ -22,5 +22,8 @@ async function upload() {
     }
 
     const body = await res.json();
-    status.innerText = `id: ${body.id}, heslo: ${body.password}`;
+    status.innerText = `
+    id: ${body.id},
+    heslo: ${body.password},
+    url: ${document.URL}`;
 }

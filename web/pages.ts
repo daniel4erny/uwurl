@@ -45,6 +45,33 @@ export function notFoundPage(): Response {
     );
 }
 
+export function middleware(): Response {
+    return htmlResponse(
+        layout("middleware", `
+            <h1>middleware</h1>
+            <form id="cookie-form">
+                <label for="password">pass</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                    autofocus
+                >
+                <button type="submit">setCookies</button>
+            </form>
+            <script>
+                document.getElementById("cookie-form").addEventListener("submit", (event) => {
+                    event.preventDefault();
+                    const password = document.getElementById("password").value;
+                    document.cookie = "password=" + encodeURIComponent(password) + "; Path=/; SameSite=Lax";
+                    window.location.href = "/";
+                });
+            </script>
+            `), 200)
+}
+
 export function passwordPage(
     fileName: string,
     options: { error?: string; status?: number } = {},

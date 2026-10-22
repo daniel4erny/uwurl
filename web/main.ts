@@ -1,13 +1,21 @@
 import index from "./public/index.html";
-import { uploadFile, downloadFile } from "./files.ts";
-import { notFoundPage } from "./pages.ts";
+import { uploadFile, downloadFile, checkAuth } from "./files.ts";
+import { middleware, notFoundPage } from "./pages.ts";
+
+type Handler = (req: Request) => Response | Promise<Response>;
+type Middleware = (handler: Handler) => Handler;
+
+const home = () => new Response(Bun.file(index.index));
 
 Bun.serve({
   port: 3000,
   routes: {
-      "/": index,
-      "/api/upload_file": uploadFile,
-      "/download/:id": downloadFile
+      "/": checkAuth(home),
+      "/index.js": Bun.file("./public/index.js"),
+      "/index.css": Bun.file("./public/index.css"),
+      "/middleware": middleware,
+      "/api/upload_file": checkAuth(uploadFile),
+      "/download/:id": checkAuth(downloadFile)
   },
   fetch() {
     return notFoundPage();

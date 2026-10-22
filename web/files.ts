@@ -2,7 +2,15 @@ import { Database } from "bun:sqlite";
 import { file } from "bun";
 import type { BunRequest } from "bun";
 import { mkdirSync } from "node:fs";
-import { notFoundPage, passwordPage } from "./pages.ts";
+import { middleware, notFoundPage, passwordPage } from "./pages.ts";
+import { env } from "bun";
+
+if (typeof env.PASS != "string") {
+    console.error("gg pico")
+    throw new Error("ENV PASS NOT DEFINED");
+}
+
+const PASS = await Bun.password.hash(env.PASS)
 
 type FileRecord = {
     id: string;
@@ -12,6 +20,19 @@ type FileRecord = {
     created_at: number;
     path: string;
 };
+
+type Handler = (req: BunRequest<any>) => Response | Promise<Response>;
+
+export const checkAuth = (h: Handler) => async (req: BunRequest): Promise<Response> => {
+    const pass = req.cookies.get("password")
+    const passOk = pass !== null && await Bun.password.verify(pass, PASS)
+    if (passOk) {
+        return h(req)
+    }
+    else {
+        return middleware()
+    }
+}
 
 mkdirSync("./data", { recursive: true }); // SQLite neumí vytvořit složku, jen soubor
 mkdirSync("./uploads", { recursive: true });
@@ -106,7 +127,6 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
                 });
             }
 
-            // heslo v DB je hash – porovnává se přes verify, ne novým hashem
             const passwordOk = await Bun.password.verify(password, fileRecord.password);
 
             if (!passwordOk) {
