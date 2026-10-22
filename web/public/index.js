@@ -25,5 +25,5 @@ async function upload() {
     status.innerText = `
     id: ${body.id},
     heslo: ${body.password},
-    url: ${document.URL}`;
+    url: ${document.URL}/download/${body.id}`;
 }
