@@ -1,5 +1,5 @@
-// script je type="module" → funkce nejsou globální, onclick="upload()" v HTML je nevidí
 document.getElementById("uploadButton").addEventListener("click", upload);
+
 
 async function upload() {
     const fileInput = document.getElementById("fileInput");

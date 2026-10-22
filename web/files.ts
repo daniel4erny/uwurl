@@ -151,3 +151,7 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
         return new Response("Internal Server Error", { status: 500 });
     }
 }
+
+export async function cleanUpFiles() {
+
+}
