@@ -1,5 +1,6 @@
 import index from "./public/index.html";
 import { uploadFile, downloadFile } from "./files.ts";
+import { notFoundPage } from "./pages.ts";
 
 Bun.serve({
   port: 3000,
@@ -9,6 +10,6 @@ Bun.serve({
       "/download/:id": downloadFile
   },
   fetch() {
-    return new Response("Not Found", { status: 404 });
+    return notFoundPage();
   },
 });

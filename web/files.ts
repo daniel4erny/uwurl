@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { file } from "bun";
 import type { BunRequest } from "bun";
 import { mkdirSync } from "node:fs";
+import { notFoundPage, passwordPage } from "./pages.ts";
 
 type FileRecord = {
     id: string;
@@ -79,10 +80,11 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
             ).get(id);
 
             if (!fileRecord) {
-                return new Response("File not found", { status: 404 });
+                return notFoundPage();
             }
 
-            return Response.json(fileRecord.name);}
+            return passwordPage(fileRecord.name);
+        }
 
         else if (method == "POST") {
             const id = req.params.id;
@@ -91,21 +93,27 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
             ).get(id);
 
             if (!fileRecord) {
-                return new Response("File not found", { status: 404 });
+                return notFoundPage();
             }
-
 
             const form = await req.formData();
             const password = form.get("password");
 
-            if (typeof password !== "string") {
-                return new Response("Missing password", { status: 400 });
+            if (typeof password !== "string" || password.length === 0) {
+                return passwordPage(fileRecord.name, {
+                    status: 400,
+                    error: "Zadej heslo.",
+                });
             }
 
-            const hash = await Bun.password.hash(password)
+            // heslo v DB je hash – porovnává se přes verify, ne novým hashem
+            const passwordOk = await Bun.password.verify(password, fileRecord.password);
 
-            if (hash !== fileRecord.password) {
-                return new Response("Invalid password", { status: 403 });
+            if (!passwordOk) {
+                return passwordPage(fileRecord.name, {
+                    status: 403,
+                    error: "Špatné heslo, zkus to znovu.",
+                });
             }
 
             const fileData = await Bun.file(fileRecord.path);
