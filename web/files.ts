@@ -4,6 +4,7 @@ import type { BunRequest } from "bun";
 import { mkdirSync } from "node:fs";
 import { middleware, notFoundPage, passwordPage } from "./pages.ts";
 import { env } from "bun";
+import { time } from "node:console";
 
 if (typeof env.PASS != "string") {
     console.error("gg pico")
@@ -153,5 +154,26 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
 }
 
 export async function cleanUpFiles() {
+    const files = db.query<FileRecord, [string]>(
+        "SELECT * FROM files",
+    ).all("UWU");
 
+    for (const file of files) {
+        const filePath = file.path;
+        try {
+            if (expired(file.created_at)) {
+                await Bun.file(filePath).delete();
+                db.run("DELETE FROM files WHERE id = ?", [file.id]);
+                console.log(`Deleted expired file: ${filePath}`);
+            }
+        } catch (error) {
+            console.error(`Failed to delete expired file: ${filePath}`, error);
+        }
+    }
+}
+
+function expired(createdAt: number): boolean {
+    const now = Date.now();
+    const expirationTime = 24 * 60 * 60 * 1000;
+    return now - createdAt > expirationTime;
 }
