@@ -37,7 +37,7 @@ heslo: ${body.password}
 url: ${location.origin}/download/${body.id}?pass=${body.password}`;
         fileInput.value = "";
 
-        status.innerHTML += `<button id="copyBtn" style="margin-top: 8px; padding: 6px 12px; cursor: pointer;">copy url</button>`
+        status.innerHTML += `<br><br><button id="copyBtn" style="margin-top: 8px; padding: 6px 12px; cursor: pointer;">copy url</button>`
 
         document.getElementById("copyBtn").addEventListener("click", async () => {
                 try {
