@@ -41,7 +41,7 @@ url: ${location.origin}/download/${body.id}?pass=${body.password}`;
 
         document.getElementById("copyBtn").addEventListener("click", async () => {
                 try {
-                    await navigator.clipboard.writeText(downloadUrl);
+                    await navigator.clipboard.writeText(`${location.origin}/download/${body.id}?pass=${body.password}`);
                     const btn = document.getElementById("copyBtn");
                     btn.textContent = "copied";
                     setTimeout(() => {
