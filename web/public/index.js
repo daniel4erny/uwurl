@@ -34,7 +34,7 @@ async function upload() {
         const body = await res.json();
         status.textContent = `id: ${body.id}
 heslo: ${body.password}
-url: ${location.origin}/download/${body.id}`;
+url: ${location.origin}/download/${body.id}?pass=${body.password}`;
         fileInput.value = "";
     } catch (error) {
         status.textContent = `Chyba: ${error}`;

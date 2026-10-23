@@ -141,16 +141,52 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
     try {
         const method = req.method;
         if (method == "GET") {
-            const id = req.params.id;
-            const fileRecord = db.query<FileRecord, [string]>(
-                "SELECT * FROM files WHERE id = ?",
-            ).get(id);
+            const url = new URL(req.url);
+            if (url.searchParams.has("pass")) {
+                const password = url.searchParams.get("pass");
+                const id = req.params.id;
+                const fileRecord = db.query<FileRecord, [string]>(
+                    "SELECT * FROM files WHERE id = ?",
+                ).get(id);
 
-            if (!fileRecord) {
-                return notFoundPage();
+                if (!fileRecord) {
+                    return notFoundPage();
+                }
+                if (typeof password !== "string" || password.length === 0) {
+                    return passwordPage(fileRecord.name, {
+                        status: 400,
+                        error: "Zadej heslo.",
+                    });
+                }
+
+                const passwordOk = await Bun.password.verify(password, fileRecord.password);
+
+                if (!passwordOk) {
+                    return passwordPage(fileRecord.name, {
+                        status: 403,
+                        error: "Špatné heslo, zkus to znovu.",
+                    });
+                }
+
+                const fileData = await Bun.file(fileRecord.path);
+                return new Response(fileData, {
+                    headers: {
+                        "Content-Type": "application/octet-stream",
+                        "Content-Disposition": `attachment; filename="${fileRecord.name}"`,
+                    },
+                });
+            } else {
+                const id = req.params.id;
+                const fileRecord = db.query<FileRecord, [string]>(
+                    "SELECT * FROM files WHERE id = ?",
+                ).get(id);
+
+                if (!fileRecord) {
+                    return notFoundPage();
+                }
+
+                return passwordPage(fileRecord.name);
             }
-
-            return passwordPage(fileRecord.name);
         }
 
         else if (method == "POST") {
