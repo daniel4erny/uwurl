@@ -25,7 +25,8 @@ Bun.serve({
       "/middleware": () => middleware(),
       "/login": login,
       "/api/upload_file": checkAuth(uploadFile),
-      "/download/:id": checkAuth(downloadFile)
+      "/download/:id": checkAuth(downloadFile),
+      "/favicon.ico": Bun.file("./public/favicon.ico"),
   },
   fetch() {
     return notFoundPage();

@@ -172,7 +172,7 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
                 return new Response(fileData, {
                     headers: {
                         "Content-Type": "application/octet-stream",
-                        "Content-Disposition": `attachment; filename="${fileRecord.name}"`,
+                        "Content-Disposition": contentDisposition(fileRecord.name),
                     },
                 });
             } else {
@@ -222,7 +222,7 @@ export async function downloadFile(req: BunRequest<"/download/:id">): Promise<Re
             return new Response(fileData, {
                 headers: {
                     "Content-Type": "application/octet-stream",
-                    "Content-Disposition": `attachment; filename="${fileRecord.name}"`,
+                    "Content-Disposition": contentDisposition(fileRecord.name),
                 },
             });
         } else {
@@ -257,4 +257,9 @@ function expired(createdAt: number): boolean {
     const now = Date.now();
     const expirationTime = 24 * 60 * 60 * 1000;
     return now - createdAt > expirationTime;
+}
+
+function contentDisposition(name: string): string {
+    const fallback = name.replace(/[^\x20-\x7E]|["\\]/g, "_");
+    return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
