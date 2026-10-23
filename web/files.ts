@@ -1,10 +1,9 @@
 import { Database } from "bun:sqlite";
-import { file } from "bun";
 import type { BunRequest } from "bun";
 import { mkdirSync } from "node:fs";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { middleware, notFoundPage, passwordPage } from "./pages.ts";
 import { env } from "bun";
-import { time } from "node:console";
 
 if (typeof env.PASS != "string") {
     console.error("gg pico")
@@ -12,6 +11,13 @@ if (typeof env.PASS != "string") {
 }
 
 const PASS = await Bun.password.hash(env.PASS)
+
+const AUTH_COOKIE = "password";
+const AUTH_MAX_AGE = 60 * 60 * 24 * 30; // 30 dní
+// stabilní token odvozený z PASS, takže přežije restart aplikace
+const AUTH_TOKEN = createHmac("sha256", env.PASS)
+    .update("uwurl-auth-v1")
+    .digest("hex");
 
 type FileRecord = {
     id: string;
@@ -24,14 +30,53 @@ type FileRecord = {
 
 type Handler = (req: BunRequest<any>) => Response | Promise<Response>;
 
+function isAuthorized(req: BunRequest): boolean {
+    const token = req.cookies.get(AUTH_COOKIE);
+    if (token === null) return false;
+    const given = Buffer.from(token);
+    const expected = Buffer.from(AUTH_TOKEN);
+    return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
 export const checkAuth = (h: Handler) => async (req: BunRequest): Promise<Response> => {
-    const pass = req.cookies.get("password")
-    const passOk = pass !== null && await Bun.password.verify(pass, PASS)
-    if (passOk) {
+    if (isAuthorized(req)) {
         return h(req)
     }
-    else {
-        return middleware()
+    // API volání nesmí dostat HTML přihlášky
+    if (new URL(req.url).pathname.startsWith("/api/")) {
+        return Response.json({ error: "unauthorized" }, { status: 401 });
+    }
+    return middleware()
+}
+
+export async function login(req: BunRequest): Promise<Response> {
+    if (req.method !== "POST") {
+        return new Response(null, { status: 303, headers: { Location: "/" } });
+    }
+
+    try {
+        const form = await req.formData();
+        const password = form.get("password");
+
+        if (typeof password !== "string" || password.length === 0) {
+            return middleware({ status: 400, error: "Zadej heslo." });
+        }
+
+        if (!(await Bun.password.verify(password, PASS))) {
+            return middleware({ status: 403, error: "Špatné heslo, zkus to znovu." });
+        }
+
+        return new Response(null, {
+            status: 303,
+            headers: {
+                Location: "/",
+                "Set-Cookie": `${AUTH_COOKIE}=${AUTH_TOKEN}; Path=/; Max-Age=${AUTH_MAX_AGE}; HttpOnly; SameSite=Lax`,
+                "Cache-Control": "no-store",
+            },
+        });
+    } catch (error) {
+        console.error("Error logging in:", error);
+        return middleware({ status: 500, error: "Přihlášení se nepovedlo, zkus to znovu." });
     }
 }
 

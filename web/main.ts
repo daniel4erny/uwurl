@@ -1,5 +1,5 @@
 import index from "./public/index.html";
-import { uploadFile, downloadFile, checkAuth, cleanUpFiles } from "./files.ts";
+import { uploadFile, downloadFile, checkAuth, cleanUpFiles, login } from "./files.ts";
 import { middleware, notFoundPage } from "./pages.ts";
 
 type Handler = (req: Request) => Response | Promise<Response>;
@@ -21,7 +21,8 @@ Bun.serve({
       "/": checkAuth(home),
       "/index.js": Bun.file("./public/index.js"),
       "/index.css": Bun.file("./public/index.css"),
-      "/middleware": middleware,
+      "/middleware": () => middleware(),
+      "/login": login,
       "/api/upload_file": checkAuth(uploadFile),
       "/download/:id": checkAuth(downloadFile)
   },

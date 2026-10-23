@@ -14,6 +14,7 @@ function layout(title: string, content: string): string {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(title)}</title>
+    <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <main>
@@ -45,31 +46,33 @@ export function notFoundPage(): Response {
     );
 }
 
-export function middleware(): Response {
+export function middleware(
+    options: { error?: string; status?: number } = {},
+): Response {
+    const error = options.error
+        ? `<p class="error">${escapeHtml(options.error)}</p>`
+        : "";
+
     return htmlResponse(
         layout("middleware", `
             <h1>middleware</h1>
-            <form id="cookie-form">
+            <form method="POST" action="/login">
                 <label for="password">pass</label>
                 <input
                     id="password"
                     name="password"
                     type="password"
                     autocomplete="current-password"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
                     required
                     autofocus
                 >
                 <button type="submit">setCookies</button>
             </form>
-            <script>
-                document.getElementById("cookie-form").addEventListener("submit", (event) => {
-                    event.preventDefault();
-                    const password = document.getElementById("password").value;
-                    document.cookie = "password=" + encodeURIComponent(password) + "; Path=/; SameSite=Lax";
-                    window.location.href = "/";
-                });
-            </script>
-            `), 200)
+            ${error}
+            `), options.status ?? 200)
 }
 
 export function passwordPage(
@@ -92,6 +95,9 @@ export function passwordPage(
                     name="password"
                     type="password"
                     autocomplete="current-password"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
                     required
                     autofocus
                 >
