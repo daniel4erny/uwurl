@@ -36,6 +36,21 @@ async function upload() {
 heslo: ${body.password}
 url: ${location.origin}/download/${body.id}?pass=${body.password}`;
         fileInput.value = "";
+
+        status.innerHTML += `<button id="copyBtn" style="margin-top: 8px; padding: 6px 12px; cursor: pointer;">copy url</button>`
+
+        document.getElementById("copyBtn").addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(downloadUrl);
+                    const btn = document.getElementById("copyBtn");
+                    btn.textContent = "copied";
+                    setTimeout(() => {
+                        btn.textContent = "copy url";
+                    }, 2000);
+                } catch (err) {
+                    console.error("gg pico", err);
+                }
+            });
     } catch (error) {
         status.textContent = `Chyba: ${error}`;
     } finally {

@@ -18,6 +18,7 @@ Bun.cron("0 0 * * *", async () => {
 Bun.serve({
   port: 3000,
   routes: {
+      "/health": () => new Response("ok"),
       "/": checkAuth(home),
       "/index.js": Bun.file("./public/index.js"),
       "/index.css": Bun.file("./public/index.css"),
